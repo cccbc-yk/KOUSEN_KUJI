@@ -23,7 +23,7 @@ class Colors:
 
 NORMAL = Colors()
 
-# neo.py の虹色フリッカーと同じ色
+# 前の版の虹色フリッカーと同じ色
 FLASH_COLORS = ["#FF0000", "#FF8C00", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#9400D3"]
 
 

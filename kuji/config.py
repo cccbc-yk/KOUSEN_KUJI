@@ -12,7 +12,7 @@ SETTINGS_PATH = BASE_DIR / "settings.json"
 
 RANDOM_SLOT = "*random*"
 
-# neo.py の count の分岐と同じ順番
+# 前の版の count の分岐と同じ順番
 DEFAULT_ORDER = [
     "kakuhen", "tobi", "dd", "slot", "last_dd", "alternate",
     "fake88888", "normal", "un", "normal", "un_revive",

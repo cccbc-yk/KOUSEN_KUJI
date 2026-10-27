@@ -18,6 +18,6 @@ Windows で動かすときは `MANUAL.md` を見る (`start_windows.bat` をダ�
 CSVは読むだけで書き換えない。当選者は `results/<CSV名>_当選履歴.csv` に書いていき、そこに載っている人は次から抽選に出ない。やり直すときは設定の「履歴」でリセットする。
 
 演出は `effects/` に1つずつ入っている。書き方は `effects/README.md`。
-最初の順番は前の `neo.py` と同じにしてある。
+設定の「初期の順番に戻す」は、前の版と同じ順番になる。
 
 テスト: `uv run pytest`
