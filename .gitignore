@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 .DS_Store
 ._*
+
+# 名簿（個人情報）と、アプリが作るファイル
+*.csv
+results/

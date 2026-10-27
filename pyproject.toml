@@ -1,10 +1,30 @@
 [project]
 name = "kousensai"
 version = "0.1.0"
+description = "高専祭のくじ引きアプリ"
 requires-python = ">=3.12"
 dependencies = [
+    "av>=19.0.2",
+    "customtkinter>=6.0.0",
     "numpy>=2.5.4",
     "pandas>=3.1.0",
+    "pillow>=13.0.0",
     "pydub>=0.25.1",
     "pygame>=2.6.1",
 ]
+
+[project.scripts]
+kuji = "kuji.app:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "kuji"
+module-root = ""

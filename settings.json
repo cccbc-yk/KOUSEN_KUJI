@@ -1,0 +1,66 @@
+{
+  "data": {
+    "csv_path": "data_2026_utf8.csv",
+    "encoding": "auto",
+    "has_header": true,
+    "number_col": 0,
+    "name_col": 1,
+    "sub_col": 2,
+    "strip_name_spaces": true
+  },
+  "effects": {
+    "order": [
+      "slot",
+      "slot",
+      "slot",
+      "normal",
+      "naoya",
+      "dd",
+      "alternate",
+      "un",
+      "normal",
+      "naoya",
+      "un_revive",
+      "un_revive",
+      "yokai",
+      "fake88888",
+      "fake88888",
+      "slot",
+      "normal",
+      "vivant",
+      "kakuhen"
+    ],
+    "after_order": "fallback",
+    "fallback": "normal",
+    "weights": {
+      "normal": 80.0,
+      "fake88888": 1.0,
+      "dd": 5.0,
+      "naoya": 1.0,
+      "un": 3.0,
+      "un_revive": 2.0,
+      "vivant": 1.0,
+      "tobi": 5.0,
+      "slot": 3.0,
+      "alternate": 5.0,
+      "last_dd": 5.0,
+      "yokai": 2.0,
+      "kakuhen": 2.0
+    },
+    "speed": 1.0,
+    "flash": true,
+    "start_sound": "push.wav"
+  },
+  "display": {
+    "title": "NITYC FES {year}",
+    "digit_font": "",
+    "name_font": "",
+    "fullscreen": true,
+    "volume": 0.8,
+    "logo_path": "rogo.png",
+    "show_status": true,
+    "title_screen": true,
+    "opening_video": "Credit/supported_CCBYC.mp4",
+    "credit_logo": "Credit/club_logo.png"
+  }
+}
