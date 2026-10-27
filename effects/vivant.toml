@@ -1,0 +1,18 @@
+name = "VIVANT"
+weight = 1
+start_sound = ""
+
+# at は前の zero = true のステップが始まってからのミリ秒
+steps = [
+  { action = "blank", sound = "vivant/PRE.wav", zero = true },
+  { action = "colors", bg = "#000000", fg = "#d7000f", at = 7680 },
+  { fix = "00000", sound = "push.wav", at = 12710 },
+  { fix = "00000", sound = "vivant/START.wav", wait = true, at = 13210 },
+  { fix = "00000", sound = "vivant/MUSIC.wav", zero = true },
+  { fix = "10000", sound = "test.wav", at = 4150 },
+  { fix = "11000", sound = "test.wav", at = 6070 },
+  { fix = "11100", sound = "test.wav", at = 9800 },
+  { fix = "11110", sound = "test.wav", at = 10260 },
+  { fix = "11111", sound = "test.wav", at = 10720 },
+  { fix = "11111", at = 10720 },
+]

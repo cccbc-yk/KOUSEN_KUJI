@@ -1,0 +1,12 @@
+name = "交互"
+weight = 5
+
+steps = [
+  { fix = "00000", ms = 600 },
+  { fix = "10000", ms = 600, sound = "test.wav" },
+  { fix = "01000", ms = 750, sound = "test.wav" },
+  { fix = "10100", ms = 750, sound = "test.wav" },
+  { fix = "01010", ms = 1500, sound = "test.wav" },
+  { fix = "10101", ms = 1500, sound = "test.wav" },
+  { fix = "11111", sound = "test.wav" },
+]

@@ -1,0 +1,11 @@
+name = "ノーマル"
+weight = 80
+
+steps = [
+  { fix = "00000", ms = 600 },
+  { fix = "10000", ms = 600, sound = "test.wav" },
+  { fix = "11000", ms = 600, sound = "test.wav" },
+  { fix = "11100", ms = 600, sound = "test.wav" },
+  { fix = "11110", ms = 600, sound = "test.wav" },
+  { fix = "11111", ms = 900, sound = "test.wav" },
+]

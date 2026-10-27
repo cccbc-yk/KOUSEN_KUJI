@@ -1,0 +1,12 @@
+name = "とびとび"
+weight = 5
+
+steps = [
+  { fix = "00000", ms = 600 },
+  { fix = "10000", ms = 600, sound = "test.wav" },
+  { fix = "11000", ms = 2250, sound = "test.wav" },
+  { fix = "11001", ms = 600, sound = "test.wav" },
+  { fix = "11011", ms = 1500, sound = "test.wav" },
+  { fix = "11111", ms = 900, sound = "test.wav" },
+  { action = "sound", sound = "test.wav" },
+]

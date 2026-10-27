@@ -1,0 +1,12 @@
+name = "UN"
+weight = 3
+
+steps = [
+  { fix = "00000", ms = 750 },
+  { fix = "00000", ms = 1250, sound = "en.wav" },
+  { fix = "10000", ms = 750, sound = "rA.wav" },
+  { fix = "10001", ms = 750, sound = "rA.wav" },
+  { fix = "10011", ms = 750, sound = "rA.wav" },
+  { fix = "10111", ms = 2250, sound = "rA.wav" },
+  { fix = "11111", ms = 150, sound = "rA.wav" },
+]

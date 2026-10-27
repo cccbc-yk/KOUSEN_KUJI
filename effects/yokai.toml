@@ -1,0 +1,24 @@
+name = "妖怪"
+weight = 2
+start_sound = ""
+
+steps = [
+  { action = "blank", ms = 1200, sound = "yokai/OH.wav" },
+  { fix = "00000", ms = 1200 },
+  { fix = "10000", ms = 700, sound = "yokai/TMPROCK.wav" },
+  { fix = "11000", ms = 700, sound = "yokai/TMPROCK.wav" },
+  { fix = "11100", ms = 700, sound = "yokai/TMPROCK.wav" },
+  { fix = "11101", ms = 400, sound = "yokai/TMPROCK.wav" },
+  { fix = "11101", ms = 2000 },
+  { fix = "11101", sound = "yokai/HYAKURETU.wav", wait = true },
+  # 止まっている桁が変わって見えないよう、全部回り出す瞬間に選び直す
+  { action = "redraw" },
+  { fix = "00000", sound = "yokai/HIT.wav", wait = true },
+  { fix = "10000", ms = 600, sound = "test.wav" },
+  { fix = "11000", ms = 600, sound = "test.wav" },
+  { fix = "11100", ms = 600, sound = "test.wav" },
+  { fix = "11110", ms = 600, sound = "test.wav" },
+  { fix = "11111", ms = 500, sound = "test.wav" },
+  { fix = "11111", sound = "yokai/PREKAKUTEI.wav", wait = true },
+  { action = "sound", sound = "yokai/KAKUTEI.wav" },
+]

@@ -1,0 +1,23 @@
+name = "激アツ確変"
+weight = 2
+
+steps = [
+  { fix = "00000", ms = 750 },
+  { fix = "10000", ms = 450, sound = "test.wav" },
+  { fix = "11000", ms = 750, sound = "test.wav" },
+  { fix = "11100", ms = 450, sound = "test.wav" },
+  { fix = "11110", ms = 3400, sound = "test.wav" },
+  { fix = "11100", ms = 15, sound = "XX.wav" },
+  { fix = "11100", ms = 300, sound = "test.wav" },
+  { fix = "11000", ms = 300, sound = "test.wav" },
+  { fix = "10000", ms = 300, sound = "test.wav" },
+  { action = "redraw" },
+  { fix = "10000", ms = 25, sound = "YY.wav" },
+  { action = "flash", on = true },
+  { fix = "10000", ms = 1050, sound = "test.wav" },
+  { fix = "11000", ms = 350, sound = "test.wav" },
+  { fix = "11100", ms = 350, sound = "test.wav" },
+  { fix = "11110", ms = 350, sound = "test.wav" },
+  { action = "flash", on = false },
+  { fix = "11111", ms = 1500, sound = "test.wav" },
+]

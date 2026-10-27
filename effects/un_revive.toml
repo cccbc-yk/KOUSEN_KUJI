@@ -1,0 +1,20 @@
+name = "UN復活"
+weight = 2
+
+steps = [
+  { fix = "00000", ms = 750 },
+  { fix = "00000", ms = 750, sound = "pr.wav" },
+  { fix = "00000", ms = 1250, sound = "en.wav" },
+  { fix = "10000", ms = 750, sound = "rA.wav" },
+  { fix = "10001", ms = 750, sound = "rA.wav" },
+  { fix = "10011", ms = 750, sound = "rA.wav" },
+  { fix = "10111", ms = 150, sound = "rA.wav" },
+  { fix = "10111", ms = 3750, sound = "deth.wav" },
+  { fix = "00000", ms = 1250, sound = "resp.wav" },
+  { action = "redraw" },
+  { fix = "10000", ms = 750, sound = "hA.wav" },
+  { fix = "11000", ms = 750, sound = "hA.wav" },
+  { fix = "11100", ms = 750, sound = "hA.wav" },
+  { fix = "11110", ms = 750, sound = "hA.wav" },
+  { fix = "11111", ms = 750, sound = "hA.wav" },
+]
