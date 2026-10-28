@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from .config import RANDOM_SLOT
 
-ACTIONS = {"spin", "blank", "wait", "redraw", "fake", "flash", "colors", "message", "sound"}  # と roll
+ACTIONS = {"spin", "blank", "wait", "stop", "redraw", "font", "cards", "confetti", "fake", "flash", "colors", "message", "sound"}  # と roll
 COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 ORDER_PREFIX = "order_"
 
@@ -22,12 +22,17 @@ class Step:
     sound: str = ""
     number: str = ""
     text: str = ""
-    on: bool = True
+    on: bool | None = True
     wait: bool = False  # 音が鳴り終わるまで次に進まない
     at: float | None = None  # zero のステップから何ms後に始めるか
     zero: bool = False
     bg: str = ""
     fg: str = ""
+    font: str = ""
+    volume: float = 1.0  # この音だけの音量 (0〜1)
+    fill: tuple = ()     # cards: 止まった桁のカードの色 (左から)
+    palette: tuple = ()  # confetti: 紙吹雪の色
+    burst: int = 0       # confetti: 一度に出す枚数
 
 
 @dataclass(frozen=True)
@@ -74,15 +79,30 @@ def _parse_step(i, raw):
     for key in ("wait", "zero"):
         if not isinstance(raw.get(key, False), bool):
             raise EffectError(f"{i}番目: {key} は true か false")
+    volume = raw.get("volume", 1.0)
+    if isinstance(volume, bool) or not isinstance(volume, (int, float)) or not 0 <= volume <= 1:
+        raise EffectError(f"{i}番目: volume は 0 から 1 の数で書く")
     at = raw.get("at")
     if at is not None and (isinstance(at, bool) or not isinstance(at, (int, float)) or at < 0):
         raise EffectError(f"{i}番目: at がおかしい")
     bg, fg = str(raw.get("bg", "")), str(raw.get("fg", ""))
     if action == "colors" and (bg or fg) and not (COLOR.fullmatch(bg) and COLOR.fullmatch(fg)):
         raise EffectError(f"{i}番目: bg と fg は \"#000000\" の形で両方書く")
-    return Step(action, fix, float(ms), str(raw.get("sound", "")), str(raw.get("number", "")),
-                str(raw.get("text", "")), bool(raw.get("on", True)), raw.get("wait", False),
-                None if at is None else float(at), raw.get("zero", False), bg, fg)
+    fill, palette = (raw.get(key, []) for key in ("fill", "palette"))
+    for key, colors in (("fill", fill), ("palette", palette)):
+        if not isinstance(colors, list) or not all(isinstance(c, str) and COLOR.fullmatch(c) for c in colors):
+            raise EffectError(f"{i}番目: {key} は [\"#ffffff\", \"#ff0000\"] のように色を並べて書く")
+    burst = raw.get("burst", 0)
+    if isinstance(burst, bool) or not isinstance(burst, int) or burst < 0:
+        raise EffectError(f"{i}番目: burst は 0 以上の整数")
+    # confetti で burst だけ書いたときは、降らせ続けるかどうかは変えない
+    on = raw.get("on", None if action == "confetti" and burst else True)
+    return Step(
+        action=action, fix=fix, ms=float(ms), sound=str(raw.get("sound", "")), number=str(raw.get("number", "")),
+        text=str(raw.get("text", "")), on=on, wait=raw.get("wait", False),
+        at=None if at is None else float(at), zero=raw.get("zero", False), bg=bg, fg=fg,
+        font=str(raw.get("font", "")), volume=float(volume), fill=tuple(fill), palette=tuple(palette), burst=burst,
+    )
 
 
 def _roll(i, raw):

@@ -152,7 +152,7 @@ def run(effect, **kw):
         picks.append(rng.choice(POOL))
         return picks[-1]
 
-    perf = Performance(effect, 5, pick, play=played.append, rng=rng, **kw)
+    perf = Performance(effect, 5, pick, play=lambda n, v: played.append(n), rng=rng, **kw)
     t = 0.0
     perf.start(t)
     while not perf.done:
@@ -206,7 +206,7 @@ def test_yokai(effects):
         picks.append(rng.choice(POOL))
         return picks[-1]
 
-    perf = Performance(effect, 5, pick, speed=2.0, play=lambda n: played.append((n, t)),
+    perf = Performance(effect, 5, pick, speed=2.0, play=lambda n, v: played.append((n, t)),
                        sound_length=lambda n: lengths.get(n, 0), rng=rng)
     t = 0.0
     perf.start(t)
@@ -280,7 +280,7 @@ def test_vivant(vivant):
     effect = vivant
     lengths = {"vivant/PRE.wav": 12.71, "vivant/START.wav": 2.25, "vivant/MUSIC.wav": 16.26}
     played = []
-    perf = Performance(effect, 5, lambda: POOL[5], speed=2.0, play=lambda n: played.append((n, t)),
+    perf = Performance(effect, 5, lambda: POOL[5], speed=2.0, play=lambda n, v: played.append((n, t)),
                        sound_length=lambda n: lengths.get(n, 0), rng=random.Random(0))
     t = 0.0
     perf.start(t)
@@ -368,7 +368,7 @@ steps = [
         return picks[-1]
 
     played = []
-    perf = Performance(effect, 5, pick, play=played.append, rng=random.Random(1))
+    perf = Performance(effect, 5, pick, play=lambda n, v: played.append(n), rng=random.Random(1))
     perf.start(0.0)
     for t in (0.31, 1.0, 2.29):                      # 3桁止まったまま2秒
         perf.update(t)
@@ -402,7 +402,7 @@ def test_naoya_never_shows_a_loser(effects):
         picks.append(rng.choice(POOL))
         return picks[-1]
 
-    perf = Performance(effect, 5, pick, play=lambda n: played.append((n, t)), sound_length=lambda n: lengths.get(n, 0),
+    perf = Performance(effect, 5, pick, play=lambda n, v: played.append((n, t)), sound_length=lambda n: lengths.get(n, 0),
                        rng=random.Random(0))
     t = 0.0
     perf.start(t)
@@ -423,3 +423,70 @@ def test_opening_video_audio():
     pcm = decode_audio(config.BASE_DIR / "Credit/supported_CCBYC.mp4", 44100, 2)
     assert pcm.dtype.name == "int16"
     assert pcm.size / 2 / 44100 == pytest.approx(7.87, abs=0.05)
+
+
+def test_draq(effects):
+    effect = effects["draq"]
+    assert effect.start_sound == ""
+    events, t = [], 0.0
+    perf = Performance(effect, 5, lambda: POOL[9], play=lambda n, v: events.append((round(t, 2), "play", n)),
+                       stop=lambda n: events.append((round(t, 2), "stop", n)),
+                       sound_length=lambda n: {"draq/END.wav": 1.43}.get(n, 0))
+    perf.start(t)
+    order, colors = [], set()
+    while not perf.done:
+        order += [i for i, f in enumerate(perf.mask) if f and i not in order]
+        colors.add(perf.colors)
+        t = round(t + 0.01, 2)
+        perf.update(t)
+    assert order == [0, 1, 3, 4, 2]                    # 3桁目は後回し
+    assert colors == {("#000000", "#ffffff")} and perf.font == "DotGothic16"
+    names = [n for _, kind, n in events if kind == "play"]
+    assert names.count("draq/DAMEGE.wav") == 4 and names.count("draq/MISS.wav") == 1
+    assert names.count("draq/KAISIN.wav") == 1 and names[-1] == "draq/LEVEL.wav"
+    stop_at = next(at for at, kind, n in events if kind == "stop" and n == "draq/BGM.wav")
+    end_at = next(at for at, kind, n in events if n == "draq/END.wav")
+    level_at = next(at for at, kind, n in events if n == "draq/LEVEL.wav")
+    assert stop_at == end_at and level_at == pytest.approx(end_at + 1.43, abs=0.02) and t == level_at
+    assert ("draq/BGM.wav" not in names[names.index("draq/END.wav"):])
+
+
+def test_step_volume(effects):
+    played = []
+    perf = Performance(effects["draq"], 5, lambda: POOL[0], play=lambda n, v: played.append((n, v)))
+    perf.start(0.0)
+    perf.update(100.0)
+    volumes = dict(played)
+    assert volumes["draq/BGM.wav"] == 0.5 and volumes["draq/DAMEGE.wav"] == 1.0
+    with pytest.raises(EffectError):
+        parse_effect("x", {"steps": [{"fix": "11111", "sound": "a.wav", "volume": 1.5}]})
+
+
+def test_milk(effects):
+    effect = effects["milk"]
+    colors = ["#ffffff", "#7fd3f7", "#ff8fc8", "#ffe600", "#e60012"]
+    played, t = [], 0.0
+    perf = Performance(effect, 5, lambda: POOL[4], play=lambda n, v: played.append((round(t, 2), n, v)))
+    perf.start(t)
+    order, confetti_from, bursts = [], None, []
+    while not perf.done:
+        order += [i for i, f in enumerate(perf.mask) if f and i not in order]
+        if perf.confetti and confetti_from is None:
+            confetti_from = t
+        while perf.bursts:
+            bursts.append((t, perf.bursts.pop(0)))
+        t = round(t + 0.01, 2)
+        perf.update(t)
+    bursts += [(t, b) for b in perf.bursts]
+    assert order == [0, 1, 2, 3, 4]
+    assert perf.cards == tuple(colors) and perf.colors == ("#141414", "#ffffff")
+    assert confetti_from == pytest.approx(6.02, abs=0.011) and perf.confetti
+    assert [b for _, b in bursts] == [200, 200] and t == pytest.approx(14.07, abs=0.011)
+    assert ("milk/METSU.wav", 0.5) in [(n, v) for _, n, v in played]
+
+
+def test_cards_and_confetti_parse():
+    step = parse_effect("x", {"steps": [{"action": "confetti", "burst": 50}]}).steps[0]
+    assert step.burst == 50 and step.on is None          # burst だけなら降らせ続けるかは変えない
+    with pytest.raises(EffectError):
+        parse_effect("x", {"steps": [{"action": "cards", "fill": ["white"]}]})

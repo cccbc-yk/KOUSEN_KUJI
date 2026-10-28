@@ -16,6 +16,7 @@ import customtkinter as ctk
 from . import config
 from .config import resolve_path
 from .effects import BUILTIN_NORMAL, EffectError, choose_effect, load_effects, rewrite_at
+from .fonts import load_fonts
 from .history import History, history_path_for
 from .performance import Performance
 from .roster import Entry, RosterError, build_entries, digit_count, read_table, remaining
@@ -64,6 +65,7 @@ def setup_theme():
 class App(ctk.CTk):
     def __init__(self):
         fix_tcl_library()
+        load_fonts(config.BASE_DIR / "fonts")
         setup_theme()
         super().__init__()
         self.title("高専祭くじ")
@@ -269,11 +271,14 @@ class App(ctk.CTk):
         self.performance = Performance(
             effect, max(len(c.number) for c in candidates), lambda: self.rng.choice(candidates),
             speed=es.speed, flash_enabled=es.flash, play=self.sounds.play, sound_length=self.sounds.length,
-            rng=self.rng, record=preview and record,
+            rng=self.rng, record=preview and record, stop=self.sounds.stop,
         )
         self.preview = preview
         self.taps = []
         self.stage.set_colors(NORMAL)
+        self.stage.set_font(None)
+        self.stage.set_card_fills(None)
+        self.stage.clear_confetti()
         self.stage.begin_draw(self._badge_text() if preview else "")
         self.update_status(draw_no)
         self.performance.start(time.perf_counter())
@@ -319,6 +324,11 @@ class App(ctk.CTk):
 
     def _apply_colors(self, perf):
         self.stage.set_colors(colors_from(*perf.colors) if perf.colors else NORMAL)
+        self.stage.set_font(perf.font)
+        self.stage.set_card_fills(perf.cards)
+        self.stage.set_confetti(perf.confetti, perf.confetti_palette)
+        while perf.bursts:
+            self.stage.burst(perf.bursts.pop(0), perf.confetti_palette)
 
     def _badge_text(self):
         perf = self.performance
@@ -355,6 +365,7 @@ class App(ctk.CTk):
         elif self.screen == "video":
             self.show_main()
         elif self.performance and self.preview:
+            self.sounds.stop()  # 飛ばしたときは鳴っている音も止める
             self.performance.skip()
         else:
             self.start_draw()
@@ -442,6 +453,7 @@ class App(ctk.CTk):
             self.after_cancel(self._tick_job)
         if self.video:
             self.video.stop()
+        self.stage.clear_confetti()
         self.sounds.close()
         self.destroy()
 

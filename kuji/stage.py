@@ -1,4 +1,7 @@
 # 客席に見せる画面。Canvas に直接描いている。
+import math
+import random
+import time
 import tkinter as tk
 from dataclasses import dataclass
 from tkinter import font as tkfont
@@ -25,6 +28,14 @@ NORMAL = Colors()
 
 # 前の版の虹色フリッカーと同じ色
 FLASH_COLORS = ["#FF0000", "#FF8C00", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#9400D3"]
+CONFETTI_COLORS = ["#ff4d6d", "#ffc83d", "#4dd4ff", "#7cff6b", "#b28dff", "#ff8c42", "#ffffff"]
+MAX_CONFETTI = 220  # 降らせ続けるときの数の上限 (多すぎると重い)
+
+
+def ink_on(color):
+    # 塗りつぶした色の上で読める文字の色
+    r, g, b = (int(color[i:i + 2], 16) for i in (1, 3, 5))
+    return "#111111" if 0.299 * r + 0.587 * g + 0.114 * b > 150 else "#ffffff"
 
 
 def _mix(a, b, t):
@@ -89,6 +100,8 @@ class Stage(tk.Canvas):
         self.colors = NORMAL
         self._fonts = {k: tkfont.Font(self, family="Helvetica", size=-12, weight="bold")
                        for k in ("title", "digit", "name", "sub", "small", "button")}
+        self._families = ("Helvetica", "Helvetica")
+        self._font_override = None
         self._title = ""
         self._digits = [("-", False)] * 5
         self._name, self._sub, self._muted = "", "", False
@@ -99,6 +112,12 @@ class Stage(tk.Canvas):
         self._start_enabled = True
         self._cards = []
         self._card_fixed = []
+        self._fills = None  # 止まった桁のカードを塗る色 (左から)
+        self._confetti = []
+        self._confetti_on = False
+        self._confetti_palette = CONFETTI_COLORS
+        self._confetti_job = None
+        self._confetti_last = 0.0
         self._logo = Picture()
         self._credit = Picture()
         self._chrome = True
@@ -114,13 +133,25 @@ class Stage(tk.Canvas):
             self.tag_bind(tag, "<Leave>", lambda e, t=tag: self._hover(t, False))
 
     def set_look(self, digit_family, text_family, title, logo_path, credit_path=None):
-        self._fonts["digit"].configure(family=digit_family)
-        for key in ("title", "name", "sub", "small", "button"):
-            self._fonts[key].configure(family=text_family)
+        self._families = (digit_family, text_family)
+        self._apply_fonts()
         self._title = title
         self._logo = Picture(logo_path)
         self._credit = Picture(credit_path)
         self.redraw()
+
+    def set_font(self, family):
+        # 演出の途中で全部の文字を family にする。None で元に戻す
+        if family != self._font_override:
+            self._font_override = family
+            self._apply_fonts()
+            self.redraw()
+
+    def _apply_fonts(self):
+        digit, text = self._families
+        weight = "normal" if self._font_override else "bold"  # ドットのフォントは太字にするとつぶれる
+        for key, f in self._fonts.items():
+            f.configure(family=self._font_override or (digit if key == "digit" else text), weight=weight)
 
     def set_colors(self, colors):
         if colors != self.colors:
@@ -137,12 +168,28 @@ class Stage(tk.Canvas):
             self.redraw()
             return
         self._digits = list(digits)
-        c = self.colors
         for i, ((rect, text), (ch, fixed)) in enumerate(zip(self._cards, digits)):
-            self.itemconfigure(text, text=ch, fill=c.digit_fixed if fixed else c.digit_spin)
+            fill, line, ink = self._card_style(i, fixed)
+            self.itemconfigure(text, text=ch, fill=ink)
             if self._card_fixed[i] != fixed:
                 self._card_fixed[i] = fixed
-                self.itemconfigure(rect, outline=c.line_fixed if fixed else c.line)
+                self.itemconfigure(rect, fill=fill, outline=line)
+
+    def set_card_fills(self, fills):
+        fills = list(fills) if fills else None
+        if fills != self._fills:
+            self._fills = fills
+            self.redraw()
+
+    def _card_style(self, i, fixed):
+        # (カードの塗り, 枠, 数字の色)
+        c = self.colors
+        if self._fills and (fixed or self._won):
+            fill = self._fills[i % len(self._fills)]
+            return fill, fill, ink_on(fill)
+        if self._won:
+            return c.bg, c.accent, c.accent
+        return c.bg, (c.line_fixed if fixed else c.line), (c.digit_fixed if fixed else c.digit_spin)
 
     def set_name(self, name, sub="", muted=False):
         if (name, sub, muted) != (self._name, self._sub, self._muted):
@@ -184,6 +231,11 @@ class Stage(tk.Canvas):
         self._won, self._badge = False, ""
         self._digits = [("-", False)] * n
         self.colors = NORMAL
+        self._fills = None
+        self.clear_confetti()
+        if self._font_override:
+            self._font_override = None
+            self._apply_fonts()
         self.redraw()
 
     def redraw(self):
@@ -227,6 +279,7 @@ class Stage(tk.Canvas):
                 for tag, label in (("c_quit", "終了"), ("c_fullscreen", "全画面"), ("c_settings", "設定")):
                     item = self.create_text(x, pad, anchor="ne", text=label, font=f, fill=c.muted, tags=("ui", tag))
                     x = self.bbox(item)[0] - pad
+        self.tag_raise("confetti")
 
     def _draw_cards(self, w, h):
         c = self.colors
@@ -240,12 +293,8 @@ class Stage(tk.Canvas):
         self._cards, self._card_fixed = [], []
         for i, (d, fixed) in enumerate(self._digits):
             x = x0 + i * (cw + gap)
-            if self._won:
-                line, color = c.accent, c.accent
-            else:
-                line = c.line_fixed if fixed else c.line
-                color = c.digit_fixed if fixed else c.digit_spin
-            rect = round_rect(self, x, top, x + cw, top + ch, cw * 0.06, fill=c.bg, outline=line,
+            fill, line, color = self._card_style(i, fixed)
+            rect = round_rect(self, x, top, x + cw, top + ch, cw * 0.06, fill=fill, outline=line,
                               width=max(2, int(cw * 0.03)), tags="ui")
             text = self.create_text(x + cw / 2, top + ch / 2, text=d, font=self._fonts["digit"],
                                     fill=color, tags="ui")
@@ -270,6 +319,7 @@ class Stage(tk.Canvas):
             if f.measure(text) > w * 0.9:
                 f.configure(size=-max(8, int(size * w * 0.9 / f.measure(text))))
             self.create_text(w / 2, y, text=text, font=f, fill=color, tags=("ui", "names"))
+        self.tag_raise("confetti")
 
     def _draw_start(self, w, h):
         c = self.colors
@@ -293,6 +343,77 @@ class Stage(tk.Canvas):
             self.itemconfigure("start_bg", fill=c.accent_dark if inside else c.accent)
         else:
             self.itemconfigure(tag, fill=c.text if inside else c.muted)
+
+    # 紙吹雪。on のあいだは上から降らせ続ける。burst は一度にまとめて出す
+    def set_confetti(self, on, palette=None):
+        palette = list(palette) if palette else CONFETTI_COLORS
+        if (on, palette) == (self._confetti_on, self._confetti_palette):
+            return
+        self._confetti_on, self._confetti_palette = on, palette
+        if on:
+            self._run_confetti()
+
+    def burst(self, count, palette=None):
+        if palette:
+            self._confetti_palette = list(palette)
+        w, h = self.winfo_width(), self.winfo_height()
+        for _ in range(min(count, 2 * MAX_CONFETTI)):
+            self._spawn(w, h, random.uniform(-h * 0.5, -10))
+        self._run_confetti()
+
+    def clear_confetti(self):
+        self._confetti_on = False
+        if self._confetti_job:
+            self.after_cancel(self._confetti_job)
+            self._confetti_job = None
+        self.delete("confetti")
+        self._confetti = []
+
+    def _spawn(self, w, h, y):
+        color = random.choice(self._confetti_palette)
+        item = self.create_polygon(0, 0, 0, 0, 0, 0, fill=color, outline="", tags="confetti")
+        self._confetti.append([
+            item, random.uniform(0, w), y,                                 # x, y
+            random.uniform(-60, 60), random.uniform(h * 0.18, h * 0.42),   # 速さ (px/秒)
+            random.uniform(h * 0.007, h * 0.016),                          # 大きさ
+            random.uniform(0, math.tau), random.uniform(3, 9),             # 角度, 回る速さ
+            color, random.random() < 0.3,                                  # 色, キラキラ光るか
+        ])
+
+    def _run_confetti(self):
+        if not self._confetti_job:
+            self._confetti_last = time.perf_counter()
+            self._confetti_step()
+
+    def _confetti_step(self):
+        now = time.perf_counter()
+        dt, self._confetti_last = min(now - self._confetti_last, 0.05), now
+        w, h = self.winfo_width(), self.winfo_height()
+        if self._confetti_on:
+            for _ in range(min(4, MAX_CONFETTI - len(self._confetti))):
+                self._spawn(w, h, -10)
+        alive = []
+        for p in self._confetti:
+            item, x, y, vx, vy, size, angle, spin, color, glitter = p
+            angle += spin * dt
+            x += (vx + math.sin(angle) * 40) * dt
+            y += vy * dt
+            if y > h + 30:
+                self.delete(item)
+                continue
+            p[1], p[2], p[6] = x, y, angle
+            # 紙が回りながらひらひらして見えるように、幅を cos で伸び縮みさせる
+            cw, ch = size * abs(math.cos(angle)) + 1, size * 0.6
+            ca, sa = math.cos(angle * 0.5), math.sin(angle * 0.5)
+            pts = []
+            for dx, dy in ((-cw, -ch), (cw, -ch), (cw, ch), (-cw, ch)):
+                pts += [x + dx * ca - dy * sa, y + dx * sa + dy * ca]
+            self.coords(item, *pts)
+            if glitter:
+                self.itemconfigure(item, fill="#ffffff" if random.random() < 0.35 else color)
+            alive.append(p)
+        self._confetti = alive
+        self._confetti_job = self.after(16, self._confetti_step) if alive or self._confetti_on else None
 
     # 全画面ではマウスを3秒動かさないと「設定」などを隠す
     def _show_chrome(self):

@@ -1,0 +1,23 @@
+name = "M!LK"
+weight = 1
+start_sound = ""
+
+# at は METSU が始まってからのミリ秒 (音ハメはここを変える)
+steps = [
+  { action = "colors", bg = "#141414", fg = "#ffffff" },
+  { action = "cards", fill = ["#ffffff", "#7fd3f7", "#ff8fc8", "#ffe600", "#e60012"] },
+  { fix = "00000", sound = "milk/METSU.wav", volume = 0.5, zero = true },
+
+  # サビに入ったら紙吹雪を降らせて、左から止める
+  { action = "confetti", on = true, palette = ["#ffffff", "#7fd3f7", "#ff8fc8", "#ffe600", "#e60012", "#ffd700"], at = 6450 },
+  { fix = "10000", sound = "test.wav" },
+  { fix = "11000", sound = "test.wav", at = 6850 },
+  { fix = "11100", sound = "test.wav", at = 7250 },
+  { fix = "11110", sound = "test.wav", at = 11250 },
+  { fix = "11111", sound = "test.wav", at = 11650 },
+  { action = "confetti", burst = 200 },
+
+  # 名前
+  { fix = "11111", at = 12050 , sound = "test.wav"},
+  { action = "confetti", burst = 200},
+]

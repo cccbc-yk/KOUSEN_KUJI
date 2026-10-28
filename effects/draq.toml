@@ -1,0 +1,30 @@
+name = "ドラクエ"
+weight = 1
+start_sound = ""
+
+steps = [
+  { action = "colors", bg = "#000000", fg = "#ffffff" },
+  { action = "font", font = "DotGothic16" },
+  { fix = "00000", ms = 3000, sound = "draq/BGM.wav", volume = 0.5 },
+
+  # 左から こうげき → ダメージ で1桁ずつ止める。3桁目はミスで後回し
+  { action = "wait", ms = 800, sound = "draq/ATACK.wav" },
+  { fix = "10000", ms = 1200, sound = "draq/DAMEGE.wav" },
+  { action = "wait", ms = 800, sound = "draq/ATACK.wav" },
+  { fix = "11000", ms = 1200, sound = "draq/DAMEGE.wav" },
+  { action = "wait", ms = 800, sound = "draq/ATACK.wav" },
+  { action = "wait", ms = 1200, sound = "draq/MISS.wav" },
+  { action = "wait", ms = 800, sound = "draq/ATACK.wav" },
+  { fix = "11010", ms = 1200, sound = "draq/DAMEGE.wav" },
+  { action = "wait", ms = 800, sound = "draq/ATACK.wav" },
+  { fix = "11011", ms = 2000, sound = "draq/DAMEGE.wav" },
+
+  # 残った3桁目を かいしんの いちげき で止める
+  { action = "wait", ms = 1200, sound = "draq/ATACK.wav" },
+  { fix = "11111", ms = 1500, sound = "draq/KAISIN.wav" },
+
+  # BGM を止めて END、そのあと LEVEL と一緒に名前
+  { action = "stop", sound = "draq/BGM.wav" },
+  { action = "wait", sound = "draq/END.wav", wait = true },
+  { action = "sound", sound = "draq/LEVEL.wav" },
+]

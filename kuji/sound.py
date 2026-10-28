@@ -39,11 +39,12 @@ class SoundBank:
             for name in names:
                 self._load(name)
 
-    def play(self, name):
+    def play(self, name, volume=1.0):
         if self.available and name:
             sound = self._load(name)
-            if sound:
-                sound.play()
+            channel = sound.play() if sound else None
+            if channel:
+                channel.set_volume(volume)  # 全体の音量にさらに掛かる。チャンネルは使い回すので毎回入れる
 
     def length(self, name):
         sound = self._load(name) if self.available and name else None
@@ -55,6 +56,15 @@ class SoundBank:
     def files(self):
         return sorted(p.relative_to(self.directory).as_posix() for p in self.directory.rglob("*.wav")
                       if not p.name.startswith("._"))
+
+    def stop(self, name=None, fade_ms=200):
+        # name を省くと全部止める
+        if not self.available:
+            return
+        if not name:
+            pygame.mixer.fadeout(fade_ms)
+        elif self._cache.get(name):
+            self._cache[name].fadeout(fade_ms)
 
     def set_volume(self, volume):
         self.volume = volume

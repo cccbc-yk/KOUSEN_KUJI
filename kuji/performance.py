@@ -8,14 +8,15 @@ class Performance:
     """1回分の演出。時間 (秒) を渡すと進む。"""
 
     def __init__(self, effect, digits, pick, speed=1.0, flash_enabled=True, play=None, sound_length=None,
-                 rng=None, record=False):
+                 rng=None, record=False, stop=None):
         self.effect = effect
         self.digits = digits
         self._pick = pick
         self._speed = max(speed, 0.05)
         self._flash_enabled = flash_enabled
-        self._play = play or (lambda name: None)
+        self._play = play or (lambda name, volume: None)
         self._sound_length = sound_length or (lambda name: 0)
+        self._stop = stop or (lambda name: None)
         self._rng = rng or random.Random()
         self.record = record  # 記録モード: at のあるステップは tap() されるまで始めない
 
@@ -25,6 +26,11 @@ class Performance:
         self.blank = False
         self.flash = False
         self.colors = None  # (背景, 文字) の色。None ならいつもの色
+        self.font = None
+        self.cards = None     # 止まった桁のカードの色
+        self.confetti = False
+        self.confetti_palette = None
+        self.bursts = []      # まだ画面に出していない紙吹雪の burst
         self.message = ""
         self.done = False
         self.zero_index = -1
@@ -83,8 +89,10 @@ class Performance:
                 for i in range(self.digits)]
 
     def _enter(self, step):
-        if step.sound:
-            self._play(step.sound)
+        if step.action == "stop":
+            self._stop(step.sound)
+        elif step.sound:
+            self._play(step.sound, step.volume)
         if step.action == "spin":
             self.mask = normalize_mask(step.fix, self.digits)
             self.blank = False
@@ -100,6 +108,17 @@ class Performance:
             self.flash = step.on and self._flash_enabled
         elif step.action == "colors":
             self.colors = (step.bg, step.fg) if step.bg else None
+        elif step.action == "font":
+            self.font = step.font or None
+        elif step.action == "cards":
+            self.cards = step.fill or None
+        elif step.action == "confetti":
+            if step.on is not None:
+                self.confetti = step.on
+            if step.palette:
+                self.confetti_palette = step.palette
+            if step.burst:
+                self.bursts.append(step.burst)
         elif step.action == "message":
             self.message = step.text
 

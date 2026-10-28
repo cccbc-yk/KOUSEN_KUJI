@@ -22,13 +22,19 @@ steps = [
 - `{ action = "fake", number = "88888" }` 番号の代わりに88888を出す (redrawで戻る)
 - `{ action = "flash", on = true }` 虹フラッシュ開始 (`on = false` で終わり)
 - `{ action = "colors", bg = "#000000", fg = "#d7000f" }` 背景と文字の色を変える (次の抽選で元に戻る)
+- `{ action = "cards", fill = ["#ffffff", "#7fd3f7", "#ff8fc8", "#ffe600", "#e60012"] }` 止まった桁のカードを左からこの色で塗る (次の抽選で元に戻る)
+- `{ action = "confetti", on = true }` 紙吹雪を降らせ続ける (`on = false` で止める。`palette = [...]` で色も決められる)
+- `{ action = "confetti", burst = 200 }` 紙吹雪を一度に200枚出す
+- `{ action = "font", font = "DotGothic16" }` 文字を全部そのフォントにする (次の抽選で元に戻る。`fonts/` に入れたフォントも使える)
 - `{ action = "message", text = "再抽選" }` 名前のところに文字を出す
 - `{ action = "sound", sound = "8.wav" }` 音だけ鳴らす
 - `{ action = "wait", ms = 300 }` 何も変えずに待つ (sound も付けられる)
+- `{ action = "stop", sound = "draq/BGM.wav" }` 鳴っている音を止める (sound を省くと全部)
 
 1行に `{ ... }, { ... },` と何個か並べて書いてもいい。
 
 `sound` は `music/` から探す (`yokai/OH.wav` のようにフォルダも書ける)。ステップの最初に鳴る。
+`volume = 0.5` を付けると、その音だけ小さくできる (0〜1。設定の音量にさらに掛かる)。
 `wait = true` を付けると、その音が鳴り終わるまで次に進まない (速さの設定に関係なく音の長さだけ待つ)。
 
 ## 音ハメ
